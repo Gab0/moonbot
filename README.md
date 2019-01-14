@@ -9,7 +9,8 @@ a genetic algorithm approach was implemented to seek the most well-rounded Crite
 losing the least ammount money possible by mankind.
 
 Use at your own risk.
-###Setup
+
+### Setup
 ```
 $git clone https://github.com/gab0/moonbot.git
 ```
@@ -20,9 +21,9 @@ Create `credentials_EXCHANGENAME.txt`:
 [okcoin password]
 ```
 
-###Usage
+### Usage
 ```
-$python moonbot.py -e okcoinusd,binance   # run moonbot on given list of exchanges
+$python moonbot.py -e [okcoinusd,binance] # run moonbot on given list of exchanges.
 $python moonbot.py --help                 # :)
 $python moonbot.py --dry                  # like a backtest, but running live. does not
 trade real money, does not need OKcoin API keys. 
@@ -31,6 +32,6 @@ And run.
 
 Supported exchanges are all those that are supported by ccxt library.
 
-###Phylosophy
+### Phylosophy
 Against modern trading bots optimized by machine learning and stuff, this bot relies on the dumbest techniques.
 The bet here is to watch multiple assets, and choose the most profitable to invest on short term. 
