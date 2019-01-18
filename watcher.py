@@ -8,6 +8,7 @@ import re
 from evaluation import constants
 from evaluation import localStrategies, globalStrategies
 
+import interface
 
 class Coin():
     def __init__(self, MarketName):

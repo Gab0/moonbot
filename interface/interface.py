@@ -67,7 +67,11 @@ def showTransactionRecord(TransactionRecord):
 
 
 def printColored(Text, Color, end='\n'):
-    print("%s %s %s" % ( fg(Color), Text, fg('white') ), end=end)
+    try:
+        print("%s %s %s" % ( fg(Color), Text, fg('white') ), end=end)
+    except Exception as e:
+        # in some systems it crashes.
+        print("%s %s %s" % ( fg(Color), Text.encode('utf-8'), fg('white') ), end=end)
 
 
 def showSessionProfit(sessionProfitPercent):
@@ -86,3 +90,13 @@ def showCotations(buy_value, sell_value, Labels=['BUY', 'SELL']):
                                                   Labels[1],
                                                   sell_value,
                                                   DIFFERENCE))
+
+
+def showMarketOrder(MarketOrder):
+    print("Market Order id %s" % MarketOrder['order_id'])
+    print("\t %.3f of %.3f    %s" % (MarketOrder['deal_amount'],
+                                     MarketOrder['amount'],
+                                     MarketOrder['symbol'].split("_")[0]))
+
+    print("\t%s @ %.3f" % (MarketOrder['type'],MarketOrder['price']))
+

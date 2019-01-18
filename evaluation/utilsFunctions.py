@@ -89,18 +89,13 @@ def showCriterion(Criterion, Print, highlight=[], HighLightMap=[], showOnlyHighl
     if not Print:
         return '\n'.join(FullText)
 
+"""
+DEPRECATED
 def saveCriterion(Criterion, FileName="standardCriterion"):
     File = open(FileName, 'w')
     File.write(str(Criterion))
     File.close()
 
-def showMarketOrder(MarketOrder):
-    print("Market Order id %s" % MarketOrder['order_id'])
-    print("\t %.3f of %.3f    %s" % (MarketOrder['deal_amount'],
-                                     MarketOrder['amount'],
-                                     MarketOrder['symbol'].split("_")[0]))
-
-    print("\t%s @ %.3f" % (MarketOrder['type'],MarketOrder['price']))
 
 def loadStandardCriterion():
     try:
@@ -122,7 +117,9 @@ def loadStandardCriterion():
         }
     return C
     
-        
+"""
+
+
 class MarketOrder():
     def __init__(self, DATA):
         self.fromData(DATA)
