@@ -14,7 +14,7 @@ Use at your own risk.
 ```
 $git clone https://github.com/gab0/moonbot.git
 ```
-###Usage
+
 Create `credentials_EXCHANGENAME.txt`:
 ```
 [okcoin key]
