@@ -67,20 +67,24 @@ def transactionDecision(Watcher, options, forceSell=False):
 
     # print(Watcher.enterzeroMarketValues)
 
-    action, Coin = Watcher.GlobalStrategy(Watcher.Wallet.Coins)
+    action = Watcher.GlobalStrategy(Watcher.Wallet.Coins)
 
+    if action is None:
+        return
+
+    # PROBLEMATIC!!!
     if forceSell:
         ActiveCoins = [Coin for Coin in Watcher.Wallet.Coins if Coin.Active]
         if ActiveCoins:
-            action = 'sell'
+            action.Operation = 'sell'
             Coin = ActiveCoins[0]
 
     if action:
-        PRICE = Coin.Candlesticks[-1][3]
-        RelevantCandlestickData = np.array(Coin.Candlesticks)
+        PRICE = action.Coin.Candlesticks[-1][3]
+        RelevantCandlestickData = np.array(action.Coin.Candlesticks)
         workingCotation = [] if options.StrictMode else [PRICE, PRICE]
 
-    if action == 'inapt':
+    if action.Operation == 'inapt':
         Coin.InaptStreak += 1
         interface.printColored("Insufficient funds to enter %s.    ...%i" %
                      (Coin.fullName, Coin.InaptStreak), 'red')
@@ -90,15 +94,22 @@ def transactionDecision(Watcher, options, forceSell=False):
         # cotation;
         TransactionValue = PRICE
         refreshMessage = "Refresh cotation on transaction below; from %.3f to %.3f"
+
+        """
         UncertainTransaction = False
+
 
         if '!' in action:
             action = action[1:]
             UncertainTransaction = True
+        """
 
-        if action == 'buy' and PRICE < TransactionValue:
+        if action.Operation == 'buy' and PRICE < TransactionValue:
+            """
             if UncertainTransaction:
                 TransactionValue = addPercent(TransactionValue, -1)
+            """
+
             Watcher.writeLog(refreshMessage % (TransactionValue, PRICE))
             TransactionValue = PRICE
 
@@ -109,9 +120,11 @@ def transactionDecision(Watcher, options, forceSell=False):
                 'initdate': datetime.datetime.now()
                 }
 
-        if action == 'sell' and PRICE > TransactionValue:
+        if action.Operation == 'sell' and PRICE > TransactionValue:
+            """
             if UncertainTransaction:
                 TransactionValue = addPercent(TransactionValue, 1)
+            """
             Watcher.writeLog(refreshMessage % (TransactionValue, PRICE))
             if CurrentRoundtrip:
                 CurrentRoundtrip['just'] = 'exit'
@@ -122,15 +135,15 @@ def transactionDecision(Watcher, options, forceSell=False):
 
         Ammount = {
             'buy': Watcher.Wallet.USD,
-            'sell': Coin.Balance
+            'sell': action.Coin.Balance
         }
 
         if action:
-            print("Creating order: %s %.3f %s for %s." % (action, Ammount[action], Coin.MarketName, TransactionValue))
+            print("Creating order: %s %.3f %s for %s." % (action.Operation, Ammount[action], Coin.MarketName, TransactionValue))
             REQUEST = Watcher.API.create_order(Coin.MarketName,
                                                'limit',
-                                               action,
-                                               amount=Ammount[action],
+                                               action.Operation,
+                                               amount=Ammount[action.Operation],
                                                price=TransactionValue)
 
         Watcher.writeLog("Net Worth @ creation US$ %.4f" % Watcher.netWorth, DATE=True)

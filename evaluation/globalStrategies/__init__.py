@@ -1,2 +1,2 @@
 
-from . import PARSIMONY 
+from . import PARSIMONY, TELEGRAM

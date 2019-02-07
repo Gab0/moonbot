@@ -23,12 +23,14 @@ class Wallet():
         BaseInfo = self.API.fetch_balance()
         # print(BaseInfo)
         coinNameList = [Coin.MarketName for Coin in self.Coins]
+        print(coinNameList)
         self.USD, Balance, frozenBalance = parseFundsInfo(BaseInfo, coinNameList)
 
         self.buyOrder = []
         self.sellOrder = []
 
         for c, Coin in enumerate(self.Coins):
+
             if Coin.MarketName in Balance.keys():
                 Coin.Balance = Balance[Coin.MarketName]
                 Coin.frozenBalance = frozenBalance[Coin.MarketName]

@@ -46,7 +46,10 @@ parser.add_option('--makeflagbank', action='store_true',
                   help='Make or renew the flag bank. Flag bank mode depends on that.')
 
 parser.add_option('--sell', action='store_true',
+
                   dest='ImmediateSell', default=False)
+
+parser.add_option('-c', '--currency', dest='MainCurrency', default="USDT")
 
 # NOTIFICATOIN MODES;
 parser.add_option('-m', '--mail', action='store_true',

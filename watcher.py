@@ -10,6 +10,7 @@ from evaluation import localStrategies, globalStrategies
 
 import interface
 
+
 class Coin():
     def __init__(self, MarketName):
         self.MarketName = MarketName
@@ -56,8 +57,10 @@ class Coin():
 
 
 class ExchangeWatcher():
-    def __init__(self, exchange_name):
+    def __init__(self, exchange_name, global_strategy, MainCurrency):
         self.ExchangeName = exchange_name
+
+        self.MainCurrency = MainCurrency
 
         self.API = exchangeAPI.initExchangeAPI(exchange_name)
 
@@ -72,7 +75,11 @@ class ExchangeWatcher():
 
         # -- LOAD STRATEGIES;
         self.LocalStrategy = localStrategies.RSI_BULL_BEAR.Strategy()
-        self.GlobalStrategy = globalStrategies.PARSIMONY.GlobalStrategy()
+
+        if global_strategy == "telegram":
+            self.GlobalStrategy = globalStrategies.TELEGRAM.GlobalStrategy()
+        elif global_strategy == "parsimony":
+            self.GlobalStrategy = globalStrategies.PARSIMONY.GlobalStrategy()
 
         self.Wallet = Wallet(self.API, Coins)
 
@@ -111,7 +118,8 @@ class ExchangeWatcher():
         self.enterzeroMarketValues = self.timezeroMarketValues
 
     def filterUsableCoin(self, CoinMarketName):
-        if re.findall("/USD[T]$", CoinMarketName):
+
+        if re.findall("/%s$" % self.MainCurrency, CoinMarketName):
             return True
 
         return False
@@ -126,7 +134,8 @@ class ExchangeWatcher():
         }
 
     def updateMarketValues(self):
-        self.Wallet.update()
+        if self.Wallet.Coins:
+            self.Wallet.update()
 
         for Coin in self.Wallet.Coins:
             Candles = self.API.fetch_ohlcv(Coin.MarketName, '1m')

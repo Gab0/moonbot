@@ -20,14 +20,15 @@ def methodBINANCE(BaseInfo, CoinNames):
     Info = BaseInfo['info']
     fCoins = {}
     uCoins = {}
+
+    WantedAsset = CoinNames[0].split("/")[-1].upper()
+
     for asset in Info['balances']:
-
         assetName = asset['asset']
-
-        if assetName == 'USDT':
+        if assetName == WantedAsset:
             USD = float(asset['free'])
 
-        assetName += '/USDT'
+        assetName += '/%s' % WantedAsset
         if assetName in CoinNames:
             fCoins[assetName] = float(asset['free'])
             uCoins[assetName] = float(asset['locked'])
@@ -44,6 +45,7 @@ def parseFundsInfo(BaseInfo, Coins):
             # print(json.dumps(Data, indent=2))
             return Data
         except Exception:
+
             continue
 
     print("""Failed to parse info! update evaluation/ccxtExchangeFundsParser.py

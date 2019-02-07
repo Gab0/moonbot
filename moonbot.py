@@ -132,7 +132,7 @@ def runMoonbot():
 
     print()
 
-    AllWatcher = [ExchangeWatcher(E) for E in ExchangeList]
+    AllWatcher = [ExchangeWatcher(E, "telegram", options.MainCurrency) for E in ExchangeList]
     ## --TEST AREA;
 
 
