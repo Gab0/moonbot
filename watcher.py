@@ -9,6 +9,7 @@ from evaluation import constants
 from evaluation import localStrategies, globalStrategies
 
 import interface
+import time
 
 
 class Coin():
@@ -31,6 +32,8 @@ class Coin():
         self.Candlesticks = []
 
         self.TransactionScore = 0
+
+        self.OrderCount = 0
         self.Active = False
 
     def feedCandle(self, Candle):
@@ -69,9 +72,10 @@ class ExchangeWatcher():
         print("%s| Markets loaded." % exchange_name)
 
         # -- LOAD AVAILABLE COINS;
-        Coins = list(self.API.markets.keys())
+        Markets = list(self.API.markets.keys())
 
-        Coins = [Coin(C) for C in Coins if self.filterUsableCoin(C)]
+        Coins = [Coin(self.MainCurrency)]
+        Coins += [Coin(C.split("/")[0]) for C in Markets if self.filterUsableCoin(C)]
 
         # -- LOAD STRATEGIES;
         self.LocalStrategy = localStrategies.RSI_BULL_BEAR.Strategy()
@@ -85,7 +89,7 @@ class ExchangeWatcher():
 
         print("%s| %i coins loaded." % (exchange_name, len(self.Wallet.Coins)))
 
-        self.Wallet.update()
+        self.Wallet.updateBalance()
 
         self.TransactionCount = {
             'Created': 0,
@@ -94,8 +98,6 @@ class ExchangeWatcher():
 
         print("%s| Wallet loaded." % exchange_name)
 
-        if self.API:
-            self.updateMarketValues()
 
         print("%s| Market Values updated." % exchange_name)
 
@@ -114,11 +116,17 @@ class ExchangeWatcher():
 
         print("%s| Net Worth weighted." % exchange_name)
 
-        self.timezeroMarketValues = self.freezeCotations()
-        self.enterzeroMarketValues = self.timezeroMarketValues
+        self.UpdateMarketValues = False
+        if self.UpdateMarketValues:
+            if self.API:
+                self.updateMarketValues()
+            self.timezeroMarketValues = self.freezeCotations()
+            self.enterzeroMarketValues = self.timezeroMarketValues
+        else:
+            self.timezeroMarketValues = None
+            self.enterzeroMarketValues = None
 
     def filterUsableCoin(self, CoinMarketName):
-
         if re.findall("/%s$" % self.MainCurrency, CoinMarketName):
             return True
 
@@ -128,15 +136,17 @@ class ExchangeWatcher():
         pass
 
     def freezeCotations(self):
+     
         return {
             Coin.MarketName: Coin.Candlesticks[-1][3]
-            for Coin in self.Wallet.Coins
+            for Coin in self.Wallet.Coins if Coin.Candlesticks
         }
 
     def updateMarketValues(self):
         if self.Wallet.Coins:
             self.Wallet.update()
 
+        sTime = time.time()
         for Coin in self.Wallet.Coins:
             Candles = self.API.fetch_ohlcv(Coin.MarketName, '1m')
 
@@ -151,13 +161,16 @@ class ExchangeWatcher():
 
             Coin.Candlesticks = Candles
 
-        self.netWorth = self.Wallet.netWorth()
+        Elapsed = time.time() - sTime
+        print("Elapsed %.2f seconds to fetch candlesticks." % Elapsed)
+
 
     def panicExit(self):
         print("Financial Panic; Losing money & aborting.")
-        if self.wallet.getPossibleTransactionAction(Coin) == 'sell':
+        return False
+        if self.Wallet.getPossibleTransactionAction(Coin) == 'sell':
             REQUEST = self.API.create_order(
-                self.wallet.Coin,
+                self.Wallet.Coin,
                 'sell', 1, price=self.LastCloseValue)
 
             message = "Panic sell request created."
@@ -185,8 +198,10 @@ class ExchangeWatcher():
             # --CANCEL STUCK ORDER;
             if ORDER['status'] != 1:
                 self.writeLog("Cancelling %s" % orderID)
-                print(self.API.cancel_order(orderID, symbol=ORDER['symbol']).uppder()+'/USD')
+                response = self.API.cancel_order(orderID)#, symbol=ORDER['symbol']).uppder()+'/USD'
+                print(response)
                 self.TransactionCount['failed'] += 1
+                continue
                 if self.CurrentRoundtrip:
                     if self.CurrentRoundtrip['just'] == 'enter':
                         CurrentRoundtrip = None
@@ -212,7 +227,6 @@ class ExchangeWatcher():
             else:
                 print("Uknown roundtrip ends.")
                 self.CurrentRoundtrip = None
-
 
     def selectAction(self):
         pass

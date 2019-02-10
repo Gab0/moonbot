@@ -28,7 +28,6 @@ def methodBINANCE(BaseInfo, CoinNames):
         if assetName == WantedAsset:
             USD = float(asset['free'])
 
-        assetName += '/%s' % WantedAsset
         if assetName in CoinNames:
             fCoins[assetName] = float(asset['free'])
             uCoins[assetName] = float(asset['locked'])

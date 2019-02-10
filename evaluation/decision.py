@@ -32,10 +32,11 @@ def weightCoinScores(Watcher, options):
             continue
 
         # NO VOLUME? EXCLUDE COIN!
-        if not Coin.Candlesticks[-1][-1]:
-            # Watcher.Wallet.Coins[c] = None
-            print("Removing %s due to zero volume!" % Coin.MarketName)
-            continue
+        if Coin.Candlesticks:
+            if not Coin.Candlesticks[-1][-1]:
+                # Watcher.Wallet.Coins[c] = None
+                print("Removing %s due to zero volume!" % Coin.MarketName)
+                continue
 
         coinNetWorth = Watcher.Wallet.netWorth(specificCoin=Coin)
 
@@ -45,33 +46,36 @@ def weightCoinScores(Watcher, options):
 
         PRICE = Coin.Candlesticks[-1][3]
         Coin.TransactionScore = Watcher.LocalStrategy(Coin)
+        if Watcher.timezeroMarketValues:
+            SessionCoinPrice = getPercent(PRICE,
+                                          Watcher.timezeroMarketValues[Coin.MarketName])
 
-        SessionCoinPrice = getPercent(PRICE,
-                                      Watcher.timezeroMarketValues[Coin.MarketName])
+            EntryCoinPriceVariation = getPercent(PRICE,
+                                                 Watcher.enterzeroMarketValues[Coin.MarketName])
+            interface.showCoinHeader(Coin,
+                                     SessionCoinPrice,
+                                     EntryCoinPriceVariation,
+                                     Coin.Candlesticks,
+            )
 
-        EntryCoinPriceVariation = getPercent(PRICE,
-                                             Watcher.enterzeroMarketValues[Coin.MarketName])
-        interface.showCoinHeader(Coin,
-                                 SessionCoinPrice,
-                                 EntryCoinPriceVariation,
-                                 Coin.Candlesticks,
-                                 )
-
-        interface.showCotations(PRICE, PRICE)
+            interface.showCotations(PRICE, PRICE)
         print()
 
     Watcher.Wallet.Coins = [c for c in Watcher.Wallet.Coins if c is not None]
+
+    Watcher.Wallet.update()
 
 
 def transactionDecision(Watcher, options, forceSell=False):
 
     # print(Watcher.enterzeroMarketValues)
 
-    action = Watcher.GlobalStrategy(Watcher.Wallet.Coins)
+    action = Watcher.GlobalStrategy(Watcher)
 
     if action is None:
         return
 
+    print("Making decision...")
     # PROBLEMATIC!!!
     if forceSell:
         ActiveCoins = [Coin for Coin in Watcher.Wallet.Coins if Coin.Active]
@@ -79,6 +83,7 @@ def transactionDecision(Watcher, options, forceSell=False):
             action.Operation = 'sell'
             Coin = ActiveCoins[0]
 
+    """
     if action:
         PRICE = action.Coin.Candlesticks[-1][3]
         RelevantCandlestickData = np.array(action.Coin.Candlesticks)
@@ -95,20 +100,20 @@ def transactionDecision(Watcher, options, forceSell=False):
         TransactionValue = PRICE
         refreshMessage = "Refresh cotation on transaction below; from %.3f to %.3f"
 
-        """
+        '''
         UncertainTransaction = False
 
 
         if '!' in action:
             action = action[1:]
             UncertainTransaction = True
-        """
+        '''
 
         if action.Operation == 'buy' and PRICE < TransactionValue:
-            """
+            '''
             if UncertainTransaction:
                 TransactionValue = addPercent(TransactionValue, -1)
-            """
+            '''
 
             Watcher.writeLog(refreshMessage % (TransactionValue, PRICE))
             TransactionValue = PRICE
@@ -121,10 +126,10 @@ def transactionDecision(Watcher, options, forceSell=False):
                 }
 
         if action.Operation == 'sell' and PRICE > TransactionValue:
-            """
+            '''
             if UncertainTransaction:
                 TransactionValue = addPercent(TransactionValue, 1)
-            """
+            '''
             Watcher.writeLog(refreshMessage % (TransactionValue, PRICE))
             if CurrentRoundtrip:
                 CurrentRoundtrip['just'] = 'exit'
@@ -133,20 +138,29 @@ def transactionDecision(Watcher, options, forceSell=False):
                 CurrentRoundtrip = {'asset': 'uknown', 'just': 'exit'}
             TransactionValue = PRICE
 
-        Ammount = {
-            'buy': Watcher.Wallet.USD,
-            'sell': action.Coin.Balance
-        }
+        if Watcher.markzeroCoinPrice:
+            Ammount = {
+                'buy': Watcher.Wallet.USD,
+                'sell': action.Coin.Balance
+            }
+        else:
+            Ammount = {
+                'buy': 0,
+                'sell': 0, 
+            }
+    """
 
-        if action:
-            print("Creating order: %s %.3f %s for %s." % (action.Operation, Ammount[action], Coin.MarketName, TransactionValue))
-            REQUEST = Watcher.API.create_order(Coin.MarketName,
-                                               'limit',
-                                               action.Operation,
-                                               amount=Ammount[action.Operation],
-                                               price=TransactionValue)
+    if action:
+        InvolvedCoins = action.getFromToAsset()
+        print(InvolvedCoins)
+        #wn = Watcher.Wallet.netWorth(specificCoin=InvolvedCoins[0])
+        Watcher.Wallet.updateBalance()
 
-        Watcher.writeLog("Net Worth @ creation US$ %.4f" % Watcher.netWorth, DATE=True)
+        action.Amount = action.Coin.Balance
+        print(action.Amount)
+        REQUEST = action.Execute(Watcher.API)
+
+        Watcher.writeLog("Net Worth @ creation US$ %.4f" % Watcher.Wallet.netWorth(), DATE=True)
         Watcher.writeLog(REQUEST)
         MarketOrderWaitRounds = 3
 

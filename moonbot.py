@@ -190,19 +190,19 @@ def runMoonbot():
             print("round nb %i\n" % (T + 1))
 
             # -- GET INDIVIDUAL CANDLESTICKS;
-            Watcher.updateMarketValues()
+            # Watcher.updateMarketValues()
 
             if not T:
                 Watcher.enterzeroMarketValues = Watcher.freezeCotations()
 
 
             # -- CALCULATE AND SHOW SESSION PROFIT;
-            sessionProfitPercent = getPercent(Watcher.netWorth, Watcher.timezeroNetWorth)
+            sessionProfitPercent = getPercent(Watcher.Wallet.netWorth(), Watcher.timezeroNetWorth)
             showSessionProfit(sessionProfitPercent)
 
             # Losing money? Safety measure;
-            if sessionProfitPercent < -2:
-                Watcher.panicExit()
+            #if sessionProfitPercent < -2:
+            #    Watcher.panicExit()
 
             # Show market limit orders;
             Watcher.showAllMarketOrders()
@@ -228,33 +228,39 @@ def runMoonbot():
                                  "%.2f would profit %.2f" % (Watcher.Wallet.stashcotation,
                                                              PROFIT))
 
+
             if Watcher.Wallet.getAllMarketOrders():
                 if MarketOrderWaitRounds:
                     print("Waiting order to fulfill;")
                     MarketOrderWaitRounds -= 1
                     showSleepBar(TimeStep)
+
             MarketOrderWaitRounds = 0
 
             if options.Watch:
                 continue
 
+            print("Evaluation step...")
             # --EVALUATE MARKET & THEIR ENTRY/EXIT POINTS;
             Watcher.clearMarketOrders()
 
             # --CLEAR ROUNDTRIP;
             Watcher.clearRoundtrip()
 
-            # -- EVALUATE TRADING COURSE;
-            decision.weightCoinScores(Watcher, options)
+            # -- EVALUATE TRADING COURSE; MOVE TO GLOBAL STRATEGY
+            # decision.weightCoinScores(Watcher, options)
 
             forceSell = False
             if options.ImmediateSell and not T:
                 forceSell = True
 
+            print("Inner evaluation step...")
             decision.transactionDecision(Watcher, options, forceSell)
 
             interface.showTransactionRecord(Watcher.TransactionCount)
+
             print("")
+
             showSleepBar(TimeStep)
 
 
