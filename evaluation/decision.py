@@ -169,12 +169,12 @@ def transactionDecision(Watcher, options, forceSell=False):
         print(InvolvedCoins)
         #wn = Watcher.Wallet.netWorth(specificCoin=InvolvedCoins[0])
 
-        if action.Amount:
+        if action.Amount > 0.05:
             print(action.Amount)
             REQUEST = action.Execute(Watcher.API)
             Watcher.writeLog(REQUEST)
         else:
-            print("No amount to execute order.")
+            print("No amount to execute order. %.2f" % action.Amount)
 
         Watcher.writeLog("Net Worth @ creation US$ %.4f" % Watcher.Wallet.netWorth(), DATE=True)
         MarketOrderWaitRounds = 3
