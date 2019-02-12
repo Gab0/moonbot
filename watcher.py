@@ -13,9 +13,8 @@ import time
 
 
 class Coin():
-    def __init__(self, MarketName):
-        self.MarketName = MarketName
-        self.Name = self.marketNameToCoinName(MarketName)
+    def __init__(self, Name):
+        self.Name = Name
 
         self.visualSymbol = self.fetchFromCoinSymbols(self.Name)
         self.fullName = self.fetchFromCoinNames(self.Name)
@@ -57,6 +56,13 @@ class Coin():
         else:
             print("WARNING: no coin symbol found for %s." % CoinName)
             return "$%s" % CoinName.upper()
+
+
+class Market():
+    def __init__(self, MarketName, assetCoin=None, currencyCoin=None):
+        self.MarketName = MarketName
+        self.assetCoin = assetCoin
+        self.currencyCoin = currencyCoin
 
 
 class ExchangeWatcher():

@@ -23,7 +23,7 @@ class Wallet():
     def updateBalance(self):
         BaseInfo = self.API.fetch_balance()
         # print(BaseInfo)
-        coinNameList = [Coin.MarketName for Coin in self.Coins]
+        coinNameList = [Coin.Name for Coin in self.Coins]
 
         self.USD, Balance, frozenBalance = parseFundsInfo(BaseInfo, coinNameList)
 
@@ -32,12 +32,11 @@ class Wallet():
 
         sTime = time.time()
         for c, Coin in enumerate(self.Coins):
-            if Coin.MarketName in Balance.keys():
-                print(Coin.MarketName)
-                Coin.Balance = Balance[Coin.MarketName]
-                Coin.frozenBalance = frozenBalance[Coin.MarketName]
+            if Coin.Name in Balance.keys():
+                Coin.Balance = Balance[Coin.Name]
+                Coin.frozenBalance = frozenBalance[Coin.Name]
             else:
-                print("WARNING! %s not found on balance data... removing." % Coin.MarketName)
+                print("WARNING! %s not found on balance data... removing." % Coin.Name)
                 self.Coins[c] = None
 
         Elapsed = time.time() - sTime
@@ -63,13 +62,13 @@ class Wallet():
     def show(self, Cotations, Print=True):
         message = "wallet: US$ %.4f;" % self.USD
 
-        print([Coin.MarketName for Coin in self.Coins])
+        print([Coin.Name for Coin in self.Coins])
         for Coin in self.Coins:
             Balance = Coin.Balance
             if Balance:
                 message += "\t%s%.6f;" % (Coin.visualSymbol, Balance)
             else:
-                print("Warning! %s not found on balance data." % Coin.MarketName)
+                print("Warning! %s not found on balance data." % Coin.Name)
 
         message += "\tNetWorth US$ %.4f;" % self.netWorth(Cotations)
 
@@ -113,3 +112,7 @@ class Wallet():
     def getAllMarketOrders(self):
         return self.buyOrder + self.sellOrder
 
+    def getCoinByName(self, Name):
+        for Coin in self.Coins:
+            if Coin.Name == Name:
+                return Coin

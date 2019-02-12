@@ -43,7 +43,7 @@ class GlobalStrategy():
 
         Coin = None
         for coin in allCoins:
-            if asset.lower() in coin.Name:
+            if asset.upper() in coin.Name:
                 Coin = coin
                 break
         if not Coin:

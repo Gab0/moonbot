@@ -24,18 +24,18 @@ def getCandlestick(coinAPI, CoinName):
 
 def weightCoinScores(Watcher, options):
     for c, Coin in enumerate(Watcher.Wallet.Coins):
-        # Candle = getCandlestick(Watcher.API, Coin.MarketName)
+        # Candle = getCandlestick(Watcher.API, Coin.Name)
         # Coin.feedCandle(Candle)
 
         if not Coin.Candlesticks:
-            print("No Candlestick data for %s" % Coin.MarketName)
+            print("No Candlestick data for %s" % Coin.Name)
             continue
 
         # NO VOLUME? EXCLUDE COIN!
         if Coin.Candlesticks:
             if not Coin.Candlesticks[-1][-1]:
                 # Watcher.Wallet.Coins[c] = None
-                print("Removing %s due to zero volume!" % Coin.MarketName)
+                print("Removing %s due to zero volume!" % Coin.Name)
                 continue
 
         coinNetWorth = Watcher.Wallet.netWorth(specificCoin=Coin)
@@ -48,10 +48,10 @@ def weightCoinScores(Watcher, options):
         Coin.TransactionScore = Watcher.LocalStrategy(Coin)
         if Watcher.timezeroMarketValues:
             SessionCoinPrice = getPercent(PRICE,
-                                          Watcher.timezeroMarketValues[Coin.MarketName])
+                                          Watcher.timezeroMarketValues[Coin.Name])
 
             EntryCoinPriceVariation = getPercent(PRICE,
-                                                 Watcher.enterzeroMarketValues[Coin.MarketName])
+                                                 Watcher.enterzeroMarketValues[Coin.Name])
             interface.showCoinHeader(Coin,
                                      SessionCoinPrice,
                                      EntryCoinPriceVariation,
@@ -151,17 +151,32 @@ def transactionDecision(Watcher, options, forceSell=False):
     """
 
     if action:
-        InvolvedCoins = action.getFromToAsset()
+        print("Coin: %s" % action.Coin.Name)
+        InvolvedCoins = [action.Coin.Name, "BTC"]
+
+        Watcher.Wallet.updateBalance()
+        try:
+            if action.Operation == 'buy':
+                action.Amount = Watcher.Wallet.getCoinByName(InvolvedCoins[1]).Balance / action.Price
+
+            elif action.Operation == 'sell':
+                action.Amount = Watcher.Wallet.getCoinByName(InvolvedCoins[0]).Balance
+
+        except Exception as e:
+            action.Amount = 0
+            print(e)
+
         print(InvolvedCoins)
         #wn = Watcher.Wallet.netWorth(specificCoin=InvolvedCoins[0])
-        Watcher.Wallet.updateBalance()
 
-        action.Amount = action.Coin.Balance
-        print(action.Amount)
-        REQUEST = action.Execute(Watcher.API)
+        if action.Amount:
+            print(action.Amount)
+            REQUEST = action.Execute(Watcher.API)
+            Watcher.writeLog(REQUEST)
+        else:
+            print("No amount to execute order.")
 
         Watcher.writeLog("Net Worth @ creation US$ %.4f" % Watcher.Wallet.netWorth(), DATE=True)
-        Watcher.writeLog(REQUEST)
         MarketOrderWaitRounds = 3
 
     else:
